@@ -2,7 +2,8 @@ from flask import Flask, jsonify, request
 import mysql.connector
 import os
 from dotenv import load_dotenv
-from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required
+import bcrypt
 
 load_dotenv()
 
@@ -15,6 +16,7 @@ def create_database():
         host=os.getenv('DB_HOST'),
         user=os.getenv('DB_USER'),
         password=os.getenv('DB_PASS'),
+        port=os.getenv('DB_PORT'),
         database='personalized_news_feed'
     )
     return connection
@@ -24,6 +26,7 @@ def home():
     return "Our page is on!"
 
 @app.route('/articles', methods=['GET'])
+@jwt_required()
 def get_articles():
     connection = create_database()
     cursor = connection.cursor(dictionary=True)
@@ -52,9 +55,10 @@ def register():
 
     connection = create_database()
     cursor = connection.cursor()
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     cursor.execute(
         "INSERT INTO users (username, email, password_hash) VALUES (%s, %s, %s)",
-        (username, email, password)
+        (username, email, hashed_password)
     )
     connection.commit()
     cursor.close()
@@ -74,11 +78,16 @@ def login():
     cursor.close()
     connection.close()
 
-    if user and user['password_hash'] == password:
+    if user and bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
         access_token = create_access_token(identity=user['user_id'])
         return jsonify(access_token=access_token), 200
     else:
         return jsonify({"error": "Invalid email or password"}), 401
+
+@app.route('/protected', methods=['GET'])
+@jwt_required()
+def protected():
+    return jsonify({"message": "This is a protected route."}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
