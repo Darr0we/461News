@@ -1,0 +1,54 @@
+.card {
+    width: 100%;
+    max-width: 400px; /* Limit the width for better readability */
+    margin: 16px auto; /* Center the cards with space between */
+    padding: 16px; /* Add inner padding for better spacing */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    border-radius: 8px; /* Rounded corners */
+    border: 1px solid #e0e0e0; /* Light border for a polished look */
+    background-color: #ffffff; /* Clean white background */
+    transition: transform 0.2s, box-shadow 0.2s; /* Smooth hover effect */
+}
+
+.card:hover {
+    transform: translateY(-4px); /* Slight lift on hover */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
+}
+
+.card h3 {
+    font-size: 1.25rem; /* Larger title font size */
+    color: #333333; /* Dark color for readability */
+    margin-bottom: 8px; /* Space below title */
+}
+
+.card p {
+    font-size: 1rem; /* Readable paragraph font size */
+    color: #666666; /* Subtle gray color for contrast */
+    line-height: 1.5; /* Better spacing between lines */
+    margin-bottom: 0; /* Remove bottom margin */
+}
+
+.card img {
+    width: 100%; /* Ensure images are responsive */
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 6px; /* Match card border radius */
+    margin-bottom: 12px; /* Space between image and text */
+}
+
+.card .btn {
+    display: inline-block;
+    padding: 8px 16px; /* Button padding */
+    font-size: 0.9rem; /* Button text size */
+    color: #ffffff; /* White text color */
+    background-color: #007bff; /* Primary button color */
+    border: none;
+    border-radius: 4px; /* Rounded button edges */
+    cursor: pointer;
+    text-decoration: none; /* Remove underline for links */
+    transition: background-color 0.3s ease-in-out;
+    text-align: center;
+}
+
+.card .btn:hover {
+    background-color: #0056b3; /* Darker shade on hover */
+}

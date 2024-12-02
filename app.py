@@ -1,5 +1,7 @@
 import os
-
+from flask import Flask
+from flask import jsonify, request
+from flask_cors import CORS
 import bcrypt
 import mysql.connector
 import os
@@ -9,16 +11,40 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 import bcrypt
 from datetime import timedelta
 from contextlib import contextmanager
+from dotenv import load_dotenv
 
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:3000"])
+
+load_dotenv()
+FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:3000")
+CORS(app, resources={r"/*": {"origins": FRONTEND_ORIGIN}}, supports_credentials=True)
+
+
+
 
 
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=1)
 jwt = JWTManager(app)
+@app.route('/test-cors', methods=['GET'])
+def test_cors():
+    return jsonify({"message": "CORS is working"}), 200
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    return response
+@app.errorhandler(Exception)
+def handle_exception(e):
+    app.logger.error(f"Error: {str(e)}")
+    return jsonify({"error": "An internal server error occurred", "details": str(e)}), 500
+@app.before_request
+def log_request_info():
+    app.logger.debug(f"Headers: {request.headers}")
+    app.logger.debug(f"Body: {request.get_data()}")
 
 
 # Database connection setup
@@ -79,7 +105,6 @@ def homepage():
         )
         topics = [row['topic_id'] for row in cursor.fetchall()]
         
-        # Fetch random articles from these topics
         if topics:
             cursor.execute(
                 "SELECT * FROM articles WHERE topic_id IN (%s) ORDER BY RAND() LIMIT 10"
@@ -87,27 +112,55 @@ def homepage():
                 topics
             )
         else:
-            # Default to random articles if no preferences
             cursor.execute("SELECT * FROM articles ORDER BY RAND() LIMIT 10")
         articles = cursor.fetchall()
         return jsonify(articles), 200
 
 
 @app.route('/articles', methods=['GET'])
-@jwt_required()
 def get_articles():
+    """
+    Endpoint to fetch articles with optional category filtering and pagination.
+    """
     try:
+        # Extract query parameters
+        category_name = request.args.get('category', 'all')
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)
+
         if page < 1 or per_page < 1:
             return jsonify({"error": "Invalid pagination parameters"}), 400
 
         with db_connection() as connection:
+            cursor = connection.cursor(dictionary=True)
             query = "SELECT * FROM articles"
-            articles = fetch_paginated_query(query, [], page, per_page, connection)
+            params = []
+            if category_name and category_name != 'all':
+                query = """
+                    SELECT articles.* FROM articles
+                    JOIN topics ON articles.topic_id = topics.topic_id
+                    WHERE topics.name = %s
+                """
+                params.append(category_name)
+
+            query += " ORDER BY publish_date DESC LIMIT %s OFFSET %s"
+            params.extend([per_page, (page - 1) * per_page])
+            app.logger.debug(f"Executing query: {query} with params: {params}")
+            cursor.execute(query, tuple(params))
+            articles = cursor.fetchall()
+
+            # Add default image URL if missing
+            default_image_url = "https://example.com/default-placeholder.jpg"
+            for article in articles:
+                if not article.get('image_url'):
+                    article['image_url'] = default_image_url
+
             return jsonify(articles), 200
+
     except Exception as e:
+        app.logger.error(f"Error in /articles: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/articles/search', methods=['GET'])
 def search_articles():
@@ -164,7 +217,6 @@ def get_article(article_id):
             if not article:
                 return jsonify({"error": "Article not found"}), 404
 
-            # Increment interaction count
             user_id = get_jwt_identity()
             topic_id = article['topic_id']
             cursor.execute(
@@ -236,6 +288,17 @@ def refresh():
     current_user = get_jwt_identity()
     new_token = create_access_token(identity=current_user)
     return jsonify(access_token=new_token), 200
+
+@app.route('/topics', methods=['GET'])
+def get_topics():
+    try:
+        with db_connection() as connection:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("SELECT topic_id, name FROM topics")
+            topics = cursor.fetchall()
+            return jsonify(topics), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/comments', methods=['GET'])
 def get_comments():
@@ -359,6 +422,12 @@ def save_preferences(user_id):
         connection.commit()
         return jsonify({"message": "Preferences saved successfully!"}), 201
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    app.logger.error(f"Error: {str(e)}")
+    return jsonify({"error": "An internal server error occurred"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5001)
+
+
