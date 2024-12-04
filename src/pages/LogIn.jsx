@@ -48,9 +48,7 @@ const LogInPage = () => {
                     <Box sx={{ mb: 4, color: 'white' }}>
                         <GlobeIcon sx={{ fontSize: 48, color: '#4fd1c5' }} />
                         <Typography variant="h3" component="h1" sx={{ mt: 2, fontWeight: 'bold' }}>
-                            Getting Started With
-                            <br />
-                            New Feeds Account
+                            Welcome Back!
                         </Typography>
                     </Box>
 
