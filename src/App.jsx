@@ -1,16 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './App.css';
-import LogInPage from './pages/LogIn';
-import Register from './pages/Register';
+import LogInPage from './pages/LogInPage/LogIn';
+import Register from './pages/RegisterPage/Register';
+import HomePage from './pages/HomePage/HomePage';
+import ArticleDetails from './pages/ArticleDetailsPage/ArticleDetails';
+import Profile from './pages/ProfilePage/Profile';
+import 'bootstrap/dist/css/bootstrap.min.css';
+
+import Navbar from './components/navbar/Navbar';
 
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
 function App() {
+  const [category, setCategory] = useState('all');
+
   return (
     <Router>
+      <Navbar setCategory={setCategory} />
       <Routes>
         <Route path="/login" element={<LogInPage />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/" element={<HomePage category={category} />} />
+        <Route path="/article/:id" element={<ArticleDetails />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </Router>
   );

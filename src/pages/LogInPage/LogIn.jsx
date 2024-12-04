@@ -163,7 +163,6 @@ const LogInPage = () => {
                 </Container>
         </Box>
     )
-
 }
 
 export default LogInPage;

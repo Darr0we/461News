@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import ArticleCard from '../components/ArticleCard';
+import ArticleCard from '../../components/card/ArticleCard';
 
-function Homepage({ category }) {
+function HomePage({ category }) {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -50,4 +50,4 @@ function Homepage({ category }) {
     );
 }
 
-export default Homepage;
+export default HomePage;

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import LoginModal from './LoginModal';
 import './Navbar.css';
+import LoginModal from '../modals/LoginModal';
+
 
 function Navbar({ setCategory }) {
     const [showModal, setShowModal] = useState(false);
