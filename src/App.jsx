@@ -5,6 +5,7 @@ import Register from './pages/RegisterPage/Register';
 import HomePage from './pages/HomePage/HomePage';
 import ArticleDetails from './pages/ArticleDetailsPage/ArticleDetails';
 import Profile from './pages/ProfilePage/Profile';
+import AboutUsPage from './pages/AboutUsPage/AboutUs';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 import Navbar from './components/navbar/Navbar';
@@ -23,6 +24,7 @@ function App() {
         <Route path="/" element={<HomePage category={category} />} />
         <Route path="/article/:id" element={<ArticleDetails />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/about-us" element={<AboutUsPage />} />
       </Routes>
     </Router>
   );

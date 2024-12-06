@@ -134,23 +134,6 @@ const Register = () => {
                                         onChange={handleInputChange}
                                     />
 
-                                    <Box sx={{ 
-                                    display: 'flex', 
-                                    justifyContent: 'space-between', 
-                                    alignItems: 'center'
-                                    }}>
-                                    <FormControlLabel
-                                        control={<Checkbox />}
-                                        label="Remember me"
-                                    />
-                                    <Button 
-                                        variant="text" 
-                                        sx={{ textTransform: 'none' }}
-                                    >
-                                        Forgot password?
-                                    </Button>
-                                    </Box>
-
                                     <Button
                                     type="submit"
                                     variant="contained"
@@ -164,24 +147,10 @@ const Register = () => {
                                         }
                                     }}
                                     >
-                                    Log In
+                                    Register
                                     </Button>
                                 </Box>
                             </form>
-
-                            <Typography 
-                            variant="body2" 
-                            align="center" 
-                            sx={{ mt: 3 }}
-                            >
-                            Don't have an account?{' '}
-                            <Button 
-                                variant="text" 
-                                sx={{ textTransform: 'none' }}
-                            >
-                                Create Account
-                            </Button>
-                            </Typography>
                         </CardContent>
                     </Card>
                 </Container>

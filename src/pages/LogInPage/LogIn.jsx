@@ -1,4 +1,5 @@
 import {React, useState} from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
     Button,
     TextField,
@@ -14,6 +15,7 @@ import {
 import { Google as GoogleIcon, Facebook as FacebookIcon, Language as GlobeIcon } from '@mui/icons-material';
 
 const LogInPage = () => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -154,6 +156,7 @@ const LogInPage = () => {
                             <Button 
                                 variant="text" 
                                 sx={{ textTransform: 'none' }}
+                                onClick={() => navigate('/register')}
                             >
                                 Create Account
                             </Button>

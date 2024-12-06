@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import './Navbar.css';
 import LoginModal from '../modals/LoginModal';
 
-
 function Navbar({ setCategory }) {
     const [showModal, setShowModal] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -46,7 +45,7 @@ function Navbar({ setCategory }) {
                 {/* Left Side: Links */}
                 <ul className="navbar-nav me-auto mb-2 mb-lg-0">
                     <li className="nav-item">
-                        <button className="nav-link btn btn-link" onClick={() => setCategory('all')}>
+                        <button className="nav-link btn btn-link" onClick={() => navigate('/')}>
                             Home
                         </button>
                     </li>
