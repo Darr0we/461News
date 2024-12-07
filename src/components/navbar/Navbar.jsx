@@ -40,13 +40,18 @@ function Navbar({ setCategory }) {
         setShowModal(false);
     };
 
+    const handleHome = () => {
+        setCategory('all');
+        navigate('')
+    }
+
     return (
         <nav className="navbar navbar-expand-lg navbar-light bg-light">
             <div className="container">
                 {/* Left Side: Links */}
                 <ul className="navbar-nav me-auto mb-2 mb-lg-0">
                     <li className="nav-item">
-                        <button className="nav-link btn btn-link" onClick={() => setCategory('all')}>
+                        <button className="nav-link btn btn-link" onClick={handleHome}>
                             Home
                         </button>
                     </li>

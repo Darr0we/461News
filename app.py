@@ -206,8 +206,9 @@ def create_article():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# TODO: jwt required and user data tracking commented out since user logins are not yet working properly
 @app.route('/articles/<int:article_id>', methods=['GET'])
-@jwt_required()
+# @jwt_required()
 def get_article(article_id):
     try:
         with db_connection() as connection:
@@ -217,17 +218,17 @@ def get_article(article_id):
             if not article:
                 return jsonify({"error": "Article not found"}), 404
 
-            user_id = get_jwt_identity()
-            topic_id = article['topic_id']
-            cursor.execute(
-                """
-                INSERT INTO user_topic_interactions (user_id, topic_id, interaction_count)
-                VALUES (%s, %s, 1)
-                ON DUPLICATE KEY UPDATE interaction_count = interaction_count + 1
-                """,
-                (user_id, topic_id)
-            )
-            connection.commit()
+            # user_id = get_jwt_identity()
+            # topic_id = article['topic_id']
+            # cursor.execute(
+            #     """
+            #     INSERT INTO user_topic_interactions (user_id, topic_id, interaction_count)
+            #     VALUES (%s, %s, 1)
+            #     ON DUPLICATE KEY UPDATE interaction_count = interaction_count + 1
+            #     """,
+            #     (user_id, topic_id)
+            # )
+            # connection.commit()
             return jsonify(article), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -429,3 +430,5 @@ def handle_exception(e):
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)
+
+
