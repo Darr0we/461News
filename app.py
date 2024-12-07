@@ -233,6 +233,21 @@ def get_article(article_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/authors/<int:author_id>', methods=['GET'])
+def get_author(author_id):
+    try:
+        with db_connection() as connection:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM authors WHERE author_id = %s", (author_id,))
+            author = cursor.fetchone()
+            if not author:
+                return jsonify({"error": "Article not found"}), 404
+            
+            return jsonify(author), 200
+
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/register', methods=['POST'])
 def register():
