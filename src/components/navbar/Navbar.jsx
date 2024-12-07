@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Navbar.css';
 import LoginModal from '../modals/LoginModal';
+import Button from 'react-bootstrap/Button';
+import ButtonGroup from 'react-bootstrap/ButtonGroup';
+import Dropdown from 'react-bootstrap/Dropdown'; 
 
 function Navbar({ setCategory }) {
     const [showModal, setShowModal] = useState(false);
@@ -95,9 +98,14 @@ function Navbar({ setCategory }) {
 
                 {/* Right Side: Login Button */}
                 {!isLoggedIn ? (
-                    <button className="btn btn-outline-primary" onClick={() => setShowModal(true)}>
-                        Login
-                    </button>
+                    <Dropdown as={ButtonGroup}>
+                        <Button variant='primary' onClick={() => setShowModal(true)}>Login</Button>
+                        <Dropdown.Toggle split variant='primary' id="dropdown-split-basic"/>
+                        <Dropdown.Menu>
+                            <Dropdown.Item href="/login">Login Page</Dropdown.Item>
+                            <Dropdown.Item href="/register">Register Page</Dropdown.Item>
+                        </Dropdown.Menu>
+                    </Dropdown>
                 ) : (
                     <span className="navbar-text">Welcome back!</span>
                 )}
