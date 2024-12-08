@@ -91,69 +91,81 @@ def home():
 @app.route('/homepage', methods=['GET'])
 @jwt_required()
 def homepage():
+    """Fetch posts for user's top-interacted topics."""
     user_id = get_jwt_identity()
-    with db_connection() as connection:
-        cursor = connection.cursor(dictionary=True)
-        # Fetch topics with high interaction counts
-        cursor.execute(
-            """
-            SELECT topic_id FROM user_topic_interactions
-            WHERE user_id = %s
-            ORDER BY interaction_count DESC LIMIT 5
-            """,
-            (user_id,)
-        )
-        topics = [row['topic_id'] for row in cursor.fetchall()]
-        
-        if topics:
+
+    try:
+        with db_connection() as connection:
+            cursor = connection.cursor(dictionary=True)
+   
             cursor.execute(
-                "SELECT * FROM articles WHERE topic_id IN (%s) ORDER BY RAND() LIMIT 10"
-                % ','.join(['%s'] * len(topics)),
-                topics
+                """
+                SELECT topic_id 
+                FROM user_topic_interactions
+                WHERE user_id = %s
+                ORDER BY interaction_count DESC
+                LIMIT 5
+                """,
+                (user_id,)
             )
-        else:
-            cursor.execute("SELECT * FROM articles ORDER BY RAND() LIMIT 10")
-        articles = cursor.fetchall()
-        return jsonify(articles), 200
+            topics = [row['topic_id'] for row in cursor.fetchall()]
+
+            if topics:
+                # Fetch articles from top topics
+                query = """
+                    SELECT * FROM articles
+                    WHERE topic_id IN (%s)
+                    ORDER BY publish_date DESC
+                    LIMIT 20
+                """ % ','.join(['%s'] * len(topics))
+                cursor.execute(query, topics)
+                articles = cursor.fetchall()
+            else:
+                # Fallback: Fetch latest articles
+                cursor.execute(
+                    "SELECT * FROM articles ORDER BY publish_date DESC LIMIT 20"
+                )
+                articles = cursor.fetchall()
+
+            return jsonify(articles), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/articles', methods=['GET'])
+@jwt_required()
 def get_articles():
     """
-    Endpoint to fetch articles with optional category filtering and pagination.
+    Fetch articles with optional topic filtering, pagination,
+    and interaction prioritization.
     """
     try:
-        # Extract query parameters
-        category_name = request.args.get('category', 'all')
+        user_id = get_jwt_identity()
+        topic_id = request.args.get('topic_id', 'all')
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)
 
-        if page < 1 or per_page < 1:
-            return jsonify({"error": "Invalid pagination parameters"}), 400
+        offset = (page - 1) * per_page
 
         with db_connection() as connection:
             cursor = connection.cursor(dictionary=True)
-            query = "SELECT * FROM articles"
-            params = []
-            if category_name and category_name != 'all':
-                query = """
-                    SELECT articles.* FROM articles
-                    JOIN topics ON articles.topic_id = topics.topic_id
-                    WHERE topics.name = %s
-                """
-                params.append(category_name)
+            query = """
+                SELECT a.*, COALESCE(uti.interaction_count, 0) AS interaction_count
+                FROM articles a
+                LEFT JOIN user_topic_interactions uti
+                ON a.topic_id = uti.topic_id AND uti.user_id = %s
+            """
+            params = [user_id]
 
-            query += " ORDER BY publish_date DESC LIMIT %s OFFSET %s"
-            params.extend([per_page, (page - 1) * per_page])
-            app.logger.debug(f"Executing query: {query} with params: {params}")
+            if topic_id != 'all':
+                query += " WHERE a.topic_id = %s"
+                params.append(topic_id)
+
+            query += " ORDER BY interaction_count DESC, a.publish_date DESC LIMIT %s OFFSET %s"
+            params.extend([per_page, offset])
+
             cursor.execute(query, tuple(params))
             articles = cursor.fetchall()
-
-            # Add default image URL if missing
-            default_image_url = "https://example.com/default-placeholder.jpg"
-            for article in articles:
-                if not article.get('image_url'):
-                    article['image_url'] = default_image_url
 
             return jsonify(articles), 200
 
@@ -355,6 +367,32 @@ def create_comment():
             return jsonify({"message": "Comment created successfully!"}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+@app.route('/profile', methods=['GET'])
+@jwt_required()
+def profile():
+    try:
+        user_id = get_jwt_identity()
+        print(f"User ID from token: {user_id}")
+
+        with db_connection() as connection:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(
+                "SELECT user_id, username, email, created_at FROM users WHERE user_id = %s",
+                (user_id,)
+            )
+            user = cursor.fetchone()
+
+            if not user:
+                return jsonify({"error": "User not found"}), 404
+
+            return jsonify(user), 200
+    except Exception as e:
+        app.logger.error(f"Error in /profile: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
+
+
+
 @app.route('/comments/<int:comment_id>', methods=['PUT'])
 @jwt_required()
 def update_comment(comment_id):
@@ -437,6 +475,37 @@ def save_preferences(user_id):
             )
         connection.commit()
         return jsonify({"message": "Preferences saved successfully!"}), 201
+@app.route('/interact', methods=['POST'])
+@jwt_required()
+def record_interaction():
+    user_id = get_jwt_identity()  
+    data = request.get_json()
+
+    if 'topic_id' not in data or not isinstance(data['topic_id'], int):
+        return jsonify({"error": "Invalid payload, 'topic_id' is required and must be an integer"}), 422
+
+    topic_id = data['topic_id']
+
+    try:
+        with db_connection() as connection:
+            cursor = connection.cursor()
+
+            # Insert or update the interaction
+            cursor.execute(
+                """
+                INSERT INTO user_topic_interactions (user_id, topic_id, interaction_count)
+                VALUES (%s, %s, 1)
+                ON DUPLICATE KEY UPDATE interaction_count = interaction_count + 1
+                """,
+                (user_id, topic_id)
+            )
+            connection.commit()
+
+        return jsonify({"message": "Interaction recorded successfully!"}), 200
+    except Exception as e:
+        print(f"Error recording interaction: {str(e)}")
+        return jsonify({"error": "Database error"}), 500
+
 
 @app.errorhandler(Exception)
 def handle_exception(e):

@@ -1,51 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Navbar.css';
-import LoginModal from '../modals/LoginModal';
 import Button from 'react-bootstrap/Button';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import Dropdown from 'react-bootstrap/Dropdown'; 
+import { useAuth } from '../../context/AuthContext';
 
-function Navbar({ setCategory }) {
-    const [showModal, setShowModal] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [categories, setCategories] = useState([]);
+function Navbar() {
+    const { isLoggedIn } = useAuth();
+    const [topics, setTopics] = useState([]);
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchCategories = async () => {
+        const fetchTopics = async () => {
             try {
-                const response = await fetch('http://localhost:5001/topics');
+                const response = await fetch('http://localhost:5001/topics', {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
+                });
                 if (!response.ok) {
-                    throw new Error('Failed to fetch categories');
+                    throw new Error('Failed to fetch topics');
                 }
                 const data = await response.json();
-                setCategories(data);
+
+                const filteredTopics = data.filter(topic => topic.topic_id >= 1 && topic.topic_id <= 6);
+                setTopics(filteredTopics);
             } catch (error) {
-                console.error('Error fetching categories:', error);
+                console.error('Error fetching topics:', error);
             }
         };
 
-        fetchCategories();
+        fetchTopics();
     }, []);
 
-    const handleProfileClick = () => {
-        if (isLoggedIn) {
-            navigate('/profile');
-        } else {
-            setShowModal(true);
-        }
+    const handleTopicClick = (topicId) => {
+        navigate(`/?topic=${topicId}`); 
     };
-
-    const handleLogin = () => {
-        setIsLoggedIn(true);
-        setShowModal(false);
-    };
-
-    const handleHome = () => {
-        setCategory('all');
-        navigate('/')
-    }
 
     return (
         <nav className="navbar navbar-expand-lg navbar-light bg-light">
@@ -53,9 +44,9 @@ function Navbar({ setCategory }) {
                 {/* Left Side: Links */}
                 <ul className="navbar-nav flex-row me-auto mb-2 mb-lg-0">
                     <li className="nav-item me-3">
-                        <button className="nav-link btn btn-link" onClick={handleHome}>
+                        <Link to="/" className="nav-link">
                             Home
-                        </button>
+                        </Link>
                     </li>
                     <li className="nav-item me-3">
                         <Link to="/about-us" className="nav-link">
@@ -63,62 +54,45 @@ function Navbar({ setCategory }) {
                         </Link>
                     </li>
                     <li className="nav-item me-3">
-                        <button className="nav-link btn btn-link" onClick={handleProfileClick}>
+                        <Link to="/profile" className="nav-link">
                             Profile
-                        </button>
+                        </Link>
                     </li>
                     <li className="nav-item dropdown me-3">
-                        <a
-                            className="nav-link dropdown-toggle"
-                            href="#"
-                            id="categoryDropdown"
-                            role="button"
-                            data-bs-toggle="dropdown"
-                            aria-expanded="false"
-                        >
-                            Category
-                        </a>
-                        <ul className="dropdown-menu" aria-labelledby="categoryDropdown">
-                            {categories.length > 0 ? (
-                                categories.map((category) => (
-                                    <li key={category.topic_id}>
-                                        <button
-                                            className="dropdown-item"
-                                            onClick={() => setCategory(category.name)}
+                        <Dropdown>
+                            <Dropdown.Toggle id="dropdown-basic">Topics</Dropdown.Toggle>
+                            <Dropdown.Menu>
+                                {topics.length > 0 ? (
+                                    topics.map((topic) => (
+                                        <Dropdown.Item
+                                            key={topic.topic_id}
+                                            onClick={() => handleTopicClick(topic.topic_id)}
                                         >
-                                            {category.name}
-                                        </button>
-                                    </li>
-                                ))
-                            ) : (
-                                <li>
-                                    <span className="dropdown-item disabled">
-                                        Loading categories...
-                                    </span>
-                                </li>
-                            )}
-                        </ul>
+                                            Topic {topic.topic_id}
+                                        </Dropdown.Item>
+                                    ))
+                                ) : (
+                                    <Dropdown.Item disabled>Loading topics...</Dropdown.Item>
+                                )}
+                            </Dropdown.Menu>
+                        </Dropdown>
                     </li>
                 </ul>
 
-                {/* Right Side: Login Button */}
+                {/* Right Side: Login */}
                 {!isLoggedIn ? (
-                    <Dropdown as={ButtonGroup}>
-                        <Button variant='primary' onClick={() => setShowModal(true)}>Login</Button>
-                        <Dropdown.Toggle split variant='primary' id="dropdown-split-basic"/>
+                    <ButtonGroup>
+                        <Button variant="primary" onClick={() => navigate('/login')}>Login</Button>
+                        <Dropdown.Toggle split variant="primary" id="dropdown-split-basic" />
                         <Dropdown.Menu>
                             <Dropdown.Item href="/login">Login Page</Dropdown.Item>
                             <Dropdown.Item href="/register">Register Page</Dropdown.Item>
                         </Dropdown.Menu>
-                    </Dropdown>
+                    </ButtonGroup>
                 ) : (
                     <span className="navbar-text">Welcome back!</span>
                 )}
-                <hr style={{height:10}}/>
             </div>
-
-            {/* Conditionally Render LoginModal */}
-            {showModal && <LoginModal closeModal={handleLogin} />}
         </nav>
     );
 }
