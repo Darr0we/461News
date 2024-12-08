@@ -7,6 +7,7 @@ function ArticleDetails() {
   const [article, setArticle] = useState(null);
   const [author, setAuthor] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [comments, setComments] = useState([]);
   const interactionRecorded = useRef(false); // To track if interaction is already recorded
 
   useEffect(() => {
@@ -53,6 +54,26 @@ function ArticleDetails() {
 
     fetchAuthorData();
   }, [article]); // Depend only on the article
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      try {
+        const response = await fetch(`http://localhost:5001/comments`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch Comments');
+        }
+        const data = await response.json();
+        const filteredComments = data.filter(comment => comment.article_id == article.article_id);
+        setComments(filteredComments);
+      } catch (err) {
+        console.error('Error fetching comments:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchComments();
+  })
 
   const recordInteraction = async (topicId) => {
     try {
@@ -170,6 +191,48 @@ function ArticleDetails() {
             </Paper>
           </Grid>
         )}
+      </Grid>
+      <br />
+      <Grid container spacing={2}>
+      {loading ? (
+          <Grid item size={8} offset={2}>
+            <Paper elevation={4} sx={{ padding: '1rem' }}>
+              <Typography variant="h2">Loading ...</Typography>
+            </Paper>
+          </Grid>
+        ) : (
+          <Grid item size={8} offset={2}>
+            {/* Comment Details */}
+            <Paper elevation={4} sx={{ padding: '1rem' }}>
+              <Grid item size={12} offset={0}>
+                <Paper elevation={8} sx={{ padding: '1rem' }}>
+                  <Typography variant="h4">{"Comments"}
+                    <Divider
+                      variant="middle"
+                      sx={{
+                        bgcolor: 'primary.main',
+                        borderBottomWidth: 'medium',
+                      }}
+                    />
+                  </Typography>
+                </Paper>
+                <br />
+                {comments.length > 0 ? (
+                  comments.map((comment) => (
+                    <Paper elevation={4} sx={{ padding: '1rem' }}
+                      key={comment.comment_id}
+                    >
+                      #{comment.comment_id} {comment.comment_text} <br />
+                      {comment.comment_date}
+                    </Paper>
+                  ))
+                ) : (
+                  <Paper disabled>Loading comments...</Paper>
+                )}
+              </Grid>
+            </Paper>
+          </Grid>
+      )}
       </Grid>
     </Box>
   );
