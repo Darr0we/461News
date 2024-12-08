@@ -53,11 +53,15 @@ function Navbar() {
                             About Us
                         </Link>
                     </li>
-                    <li className="nav-item me-3">
-                        <Link to="/profile" className="nav-link">
-                            Profile
-                        </Link>
-                    </li>
+                    {!isLoggedIn ? (
+                        <li className="nav-item me-3">
+                            <Link to="/profile" className="nav-link">
+                                Profile
+                            </Link>
+                        </li>
+                    ) :(
+                        <li></li>
+                    )}
                     <li className="nav-item dropdown me-3">
                         <Dropdown>
                             <Dropdown.Toggle id="dropdown-basic">Topics</Dropdown.Toggle>
@@ -81,21 +85,19 @@ function Navbar() {
 
                 {/* Right Side: Login */}
                 {!isLoggedIn ? (
-                    <ButtonGroup>
+                    <Dropdown as={ButtonGroup}>
                         <Button variant="primary" onClick={() => navigate('/login')}>Login</Button>
-                        <Dropdown.Toggle split variant="primary" id="dropdown-split-basic" />
+                        <Dropdown.Toggle split variant="primary" id="dropdown-split-basic"/>
                         <Dropdown.Menu>
-                            <Dropdown.Item href="/login">Login Page</Dropdown.Item>
-                            <Dropdown.Item href="/register">Register Page</Dropdown.Item>
+                            <Dropdown.Item href="/register">Register</Dropdown.Item>
                         </Dropdown.Menu>
-                    </ButtonGroup>
+                    </Dropdown>
                 ) : (
                     <Dropdown>
                         <Dropdown.Toggle id="dropdown-basic">User</Dropdown.Toggle>
                         <Dropdown.Menu>
-                            <Dropdown.Item onClick={() => setIsLoggedIn(false)} href="/">
-                                Logout
-                            </Dropdown.Item>
+                            <Dropdown.Item href="/profile">Profile</Dropdown.Item>
+                            <Dropdown.Item onClick={() => setIsLoggedIn(false)} href="/">Logout</Dropdown.Item>
                         </Dropdown.Menu>
                     </Dropdown>
                 )}
