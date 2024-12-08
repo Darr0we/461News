@@ -1,6 +1,6 @@
 import { React, useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, Typography, Paper, Grid2 as Grid, Divider } from '@mui/material';
+import { Button, Box, TextField, Typography, Paper, Grid2 as Grid, Divider } from '@mui/material';
 
 function ArticleDetails() {
   const { id } = useParams();
@@ -111,7 +111,7 @@ function ArticleDetails() {
     <Box
       sx={{
         bgcolor: 'primary.dark',
-        height: '100vh',
+        height: 'auto',
         width: '100vw',
         paddingTop: '6rem',
       }}
@@ -193,6 +193,7 @@ function ArticleDetails() {
         )}
       </Grid>
       <br />
+      {/* Comment Details */}
       <Grid container spacing={2}>
       {loading ? (
           <Grid item size={8} offset={2}>
@@ -202,7 +203,6 @@ function ArticleDetails() {
           </Grid>
         ) : (
           <Grid item size={8} offset={2}>
-            {/* Comment Details */}
             <Paper elevation={4} sx={{ padding: '1rem' }}>
               <Grid item size={12} offset={0}>
                 <Paper elevation={8} sx={{ padding: '1rem' }}>
@@ -216,6 +216,33 @@ function ArticleDetails() {
                     />
                   </Typography>
                 </Paper>
+                <br />
+                <form style={{display: "flex"}}>
+                  <Paper elevation={4} sx={{ padding: '1rem' }}>
+                    <TextField 
+                      fullWidth
+                      label="Write a comment"
+                      name='comment_text'
+                      type='comment_text'
+                      variant='outlined'
+                      style={{width: '480px'}}
+                    />
+                  </Paper>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    size="small"
+                    sx={{
+                      ml: "auto",
+                      bgcolor: 'primary.dark',
+                      '&:hover': {
+                        bgcolor: 'primary.main',
+                      },
+                    }}
+                  >
+                    Submit
+                  </Button>
+                </form>
                 <br />
                 {comments.length > 0 ? (
                   comments.map((comment) => (
