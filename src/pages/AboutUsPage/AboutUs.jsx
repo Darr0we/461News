@@ -15,7 +15,7 @@ function AboutUs(){
           </div><br />
           <h1>Members of the Team</h1>
           <p>Trent Ross (tnr39@drexel.edu)<br />
-          Main Developer of the MySql Database</p>
+          Team Manager (kinda, sorta)</p>
           <p>Duc Dang (dhd37@drexel.edu)<br />
           Main Back-End Programmer</p>
           <p>Hieu Dang (hmd56@drexel.edu)<br />
