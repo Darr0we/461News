@@ -7,7 +7,7 @@ import Dropdown from 'react-bootstrap/Dropdown';
 import { useAuth } from '../../context/AuthContext';
 
 function Navbar() {
-    const { isLoggedIn } = useAuth();
+    const { isLoggedIn, setIsLoggedIn } = useAuth();
     const [topics, setTopics] = useState([]);
     const navigate = useNavigate();
 
@@ -90,7 +90,14 @@ function Navbar() {
                         </Dropdown.Menu>
                     </ButtonGroup>
                 ) : (
-                    <span className="navbar-text">Welcome back!</span>
+                    <Dropdown>
+                        <Dropdown.Toggle id="dropdown-basic">User</Dropdown.Toggle>
+                        <Dropdown.Menu>
+                            <Dropdown.Item onClick={() => setIsLoggedIn(false)} href="/">
+                                Logout
+                            </Dropdown.Item>
+                        </Dropdown.Menu>
+                    </Dropdown>
                 )}
             </div>
         </nav>
