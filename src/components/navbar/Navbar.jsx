@@ -68,7 +68,7 @@ function Navbar() {
                                             key={topic.topic_id}
                                             onClick={() => handleTopicClick(topic.topic_id)}
                                         >
-                                            Topic {topic.topic_id}
+                                            {topic.name}
                                         </Dropdown.Item>
                                     ))
                                 ) : (
