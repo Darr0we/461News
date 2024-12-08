@@ -31,8 +31,8 @@ function HomePage({ category }) {
     }, [category]);
 
     return (
-        <div className="homepage">
-            <h1>{category === 'all' ? 'Latest Posts' : `${category.toUpperCase()} Posts`}</h1>
+        <div style={{backgroundColor: '#2196f3'}} className="homepage">
+            <h1 style={{backgroundColor: 'white'}}>{category === 'all' ? 'Latest Posts' : `${category.toUpperCase()} Posts`}</h1>
             {loading ? (
                 <p>Loading...</p>
             ) : error ? (

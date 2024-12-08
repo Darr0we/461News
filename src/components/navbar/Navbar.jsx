@@ -51,23 +51,23 @@ function Navbar({ setCategory }) {
         <nav className="navbar navbar-expand-lg navbar-light bg-light">
             <div className="container">
                 {/* Left Side: Links */}
-                <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li className="nav-item">
+                <ul className="navbar-nav flex-row me-auto mb-2 mb-lg-0">
+                    <li className="nav-item me-3">
                         <button className="nav-link btn btn-link" onClick={handleHome}>
                             Home
                         </button>
                     </li>
-                    <li className="nav-item">
+                    <li className="nav-item me-3">
                         <Link to="/about-us" className="nav-link">
                             About Us
                         </Link>
                     </li>
-                    <li className="nav-item">
+                    <li className="nav-item me-3">
                         <button className="nav-link btn btn-link" onClick={handleProfileClick}>
                             Profile
                         </button>
                     </li>
-                    <li className="nav-item dropdown">
+                    <li className="nav-item dropdown me-3">
                         <a
                             className="nav-link dropdown-toggle"
                             href="#"
@@ -114,6 +114,7 @@ function Navbar({ setCategory }) {
                 ) : (
                     <span className="navbar-text">Welcome back!</span>
                 )}
+                <hr style={{height:10}}/>
             </div>
 
             {/* Conditionally Render LoginModal */}
