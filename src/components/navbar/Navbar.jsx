@@ -42,6 +42,11 @@ function Navbar({ setCategory }) {
         setShowModal(false);
     };
 
+    const handleHome = () => {
+        setCategory('all');
+        navigate('')
+    }
+
     return (
         <nav className="navbar navbar-expand-lg navbar-light bg-light">
             <div className="container">
