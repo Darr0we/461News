@@ -44,7 +44,7 @@ function Navbar({ setCategory }) {
 
     const handleHome = () => {
         setCategory('all');
-        navigate('')
+        navigate('/')
     }
 
     return (
@@ -53,7 +53,7 @@ function Navbar({ setCategory }) {
                 {/* Left Side: Links */}
                 <ul className="navbar-nav me-auto mb-2 mb-lg-0">
                     <li className="nav-item">
-                        <button className="nav-link btn btn-link" onClick={() => navigate('/')}>
+                        <button className="nav-link btn btn-link" onClick={handleHome}>
                             Home
                         </button>
                     </li>

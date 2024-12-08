@@ -55,7 +55,7 @@ function LoginModal({ closeModal }) {
                       </div>
                       <div className="signin">
                         <span>
-                          Don’t have an account? <a href="#">Sign up here</a>
+                          Don’t have an account? <a href="/register">Sign up here</a>
                         </span>
                       </div>
                     </form>
