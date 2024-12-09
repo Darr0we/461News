@@ -9,8 +9,11 @@ function ArticleDetails() {
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]);
   const interactionRecorded = useRef(false); // To track if interaction is already recorded
+  const maxRetires = 5;
+  const retryInterval = 3000;
 
   useEffect(() => {
+    let retryCount = 0;
     const fetchArticleData = async () => {
       try {
         const response = await fetch(`http://localhost:5001/articles/${id}`);
@@ -29,10 +32,19 @@ function ArticleDetails() {
         }
       } catch (err) {
         console.error('Error fetching article:', err);
+        retryCount += 1;
+        if (retryCount <= maxRetires) {
+          setTimeout(fetchArticleData, retryInterval);
+        } else {
+          console.error('Max retries reached')
+        }
       }
     };
 
     fetchArticleData();
+    return () => {
+      clearTimeout(fetchArticleData);
+    }
   }, [id]); // Depend only on the article ID
 
   useEffect(() => {
@@ -126,6 +138,8 @@ function ArticleDetails() {
         ) : (
           <Grid item size={8} offset={2}>
             {/* Article Details */}
+            {article ? (
+            <>
             <Paper elevation={4} sx={{ padding: '1rem' }}>
               <Grid item size={10} offset={1}>
                 <Paper elevation={6} sx={{ padding: '2rem' }}>
@@ -189,6 +203,10 @@ function ArticleDetails() {
                 </Grid>
               )}
             </Paper>
+            </>
+            ) : (
+              <Paper elevation={4} sx={{ padding: '1rem' }}>Article is Loading</Paper>
+            )}
           </Grid>
         )}
       </Grid>

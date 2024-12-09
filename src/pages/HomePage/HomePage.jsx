@@ -8,11 +8,37 @@ function HomePage() {
     const [error, setError] = useState(null);
     const [page, setPage] = useState(1);
     const [topic, setTopic] = useState(null);
+    const [user, setUser] = useState(null);
     const perPage = 20;
 
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const topicId = queryParams.get('topic') || 'all';
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const response = await fetch('http://localhost:5001/profile', {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
+                });
+  
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user data');
+                }
+  
+                const data = await response.json();
+                setUser(data);
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+            }
+        };
+  
+        if (localStorage.getItem('token')) {
+            fetchUserData();
+        }
+    }, []);
 
     useEffect(() => {
         const fetchPosts = async () => {
