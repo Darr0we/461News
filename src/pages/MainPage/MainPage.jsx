@@ -41,17 +41,20 @@ function MainPage() {
 
     const onChangeHashTag = (event) => {
         const {
-        target: { value },
+            target: { value },
         } = event;
-        setHashTag(
-        typeof value === 'string' ? value.split(',') : value,
-        );
+        const updatedHashTag = typeof value === 'string' ? value.split(',') : value;
+        setHashTag(updatedHashTag); // Update the hashTag state
+        setFormData((prevData) => ({
+            ...prevData,
+            hashtags: updatedHashTag, // Update the hashtags field in formData directly
+        }));
     };
 
     // const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
     const [formData, setFormData] = useState({
         title: "",
-        hashtags: hashTag,
+        hashtags: [],
         publish_date: "",
         content: "",
         rating: 0,
@@ -69,7 +72,7 @@ function MainPage() {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-        console.log("HashTag: ", hashTag);
+        console.log("HashTag: ", formData.hashtags);
         console.log("Form Data: ", formData);
     }
 
