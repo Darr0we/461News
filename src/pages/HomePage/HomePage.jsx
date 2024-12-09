@@ -7,6 +7,7 @@ function HomePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [page, setPage] = useState(1);
+    const [topic, setTopic] = useState(null);
     const perPage = 20;
 
     const location = useLocation();
@@ -42,10 +43,30 @@ function HomePage() {
         fetchPosts();
     }, [topicId, page]);
 
+    useEffect(() => {
+        const fetchTopicData = async () => {
+            try {
+                const response = await fetch(`http://localhost:5001/topics`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch Topic');
+                  }
+                  const data = await response.json();
+                  const matchedTopic = data.find(topic => topic.topic_id === parseInt(topicId));
+                  setTopic(matchedTopic);
+            } catch (err) {
+                console.error('Error fetching topic:', err);
+            }
+        };
+
+        if (topicId){
+            fetchTopicData();
+        }
+    }, [topicId]);
+
     return (
         <div style={{ backgroundColor: '#2196f3' }} className="homepage">
             <h1 style={{ backgroundColor: 'white' }}>
-                {topicId === 'all' ? 'Latest Posts' : `Posts for Topic ${topicId}`}
+                {topicId === 'all' ? 'Latest Posts' : `Posts for ${topic?.name}`}
             </h1>
             {loading ? (
                 <p>Loading...</p>

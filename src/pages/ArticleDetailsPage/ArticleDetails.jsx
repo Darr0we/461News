@@ -63,7 +63,7 @@ function ArticleDetails() {
           throw new Error('Failed to fetch Comments');
         }
         const data = await response.json();
-        const filteredComments = data.filter(comment => comment.article_id == article.article_id);
+        const filteredComments = data.filter(comment => comment.article_id === article.article_id);
         setComments(filteredComments);
       } catch (err) {
         console.error('Error fetching comments:', err);
