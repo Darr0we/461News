@@ -76,7 +76,7 @@ function HomePage() {
         const fetchPreferences = async () => {
             try {
                 const userId = localStorage.getItem('user_id');
-                const response = await fetch(`http://localhost:5001/users/${userId}/preferences`, {
+                const response = await fetch(`http://localhost:5001/users/${parseInt(userId)}/preferences`, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`,
                     },
@@ -85,7 +85,7 @@ function HomePage() {
                     throw new Error('Failed to fetch preferences');
                   }
                   const data = await response.json();
-                  setPreferences(data);
+                  setPreferences(data.preferences);
             } catch (err) {
                 console.error('Error fetching preferences:', err);
             }
@@ -96,6 +96,10 @@ function HomePage() {
         }
     }, [isLoggedIn]);
 
+    const filteredPosts = posts.filter(post =>
+        preferences.some(preference => preference.topic_id === post.topic_id)
+    );
+
     return (
         <div style={{ backgroundColor: '#2196f3' }} className="homepage">
             <h1 style={{ backgroundColor: 'white' }}>
@@ -105,17 +109,15 @@ function HomePage() {
                 <p>Loading...</p>
             ) : error ? (
                 <p>Error: {error}</p>
-            ) : isLoggedIn && preferences.length > 0 ? (
+            ) : isLoggedIn && filteredPosts.length > 0 ? (
                 <div className="articles">
-                    {preferences.map((preference) => (
-                        (posts.length) > 0 ? (
-                            posts.map((post) => (
-                                <ArticleCard key={preference.topic_id} post={post} />
-                            ))
-                        ) : (
-                            <p>No posts available.</p>
-                        )
-                    ))} 
+                    {filteredPosts.length > 0 ? (
+                        filteredPosts.map((post) => (
+                            <ArticleCard key={post.article_id} post={post} />
+                        ))
+                    ) : (
+                        <p>No posts available.</p>
+                    )} 
                 </div>
             ) : (
                 <div className="articles">
