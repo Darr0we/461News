@@ -11,6 +11,7 @@ function HomePage() {
     const [page, setPage] = useState(1);
     const [topic, setTopic] = useState(null);
     const [preferences, setPreferences] = useState([]);
+    const [recommendations, setRecommendations] = useState([]);
     const perPage = 20;
 
     const location = useLocation();
@@ -84,8 +85,9 @@ function HomePage() {
                 if (!response.ok) {
                     throw new Error('Failed to fetch preferences');
                   }
-                  const data = await response.json();
-                  setPreferences(data.preferences);
+                const data = await response.json();
+                setRecommendations(data.recommendations);
+                setPreferences(data.preferences);
             } catch (err) {
                 console.error('Error fetching preferences:', err);
             }
@@ -96,6 +98,10 @@ function HomePage() {
         }
     }, [isLoggedIn]);
 
+    const recommendedPosts = posts.filter(post =>
+        recommendations.some(recommendation => recommendation.topic_id === post.topic_id)
+    );
+
     const filteredPosts = posts.filter(post =>
         preferences.some(preference => preference.topic_id === post.topic_id)
     );
@@ -103,21 +109,39 @@ function HomePage() {
     return (
         <div style={{ backgroundColor: '#2196f3' }} className="homepage">
             <h1 style={{ backgroundColor: 'white' }}>
-                {topicId !== 'all' ? `Posts for ${topic?.name}` : isLoggedIn ? 'Recommended Posts' : 'Latest Posts'}
+                {topicId !== 'all' ? 
+                    `Posts for ${topic?.name}` : 
+                    isLoggedIn ? 
+                        <p>&nbsp;&nbsp;&nbsp;
+                            Recommended Posts 
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            Your Preferred Posts</p> : 
+                        'Latest Posts'}
             </h1>
             {loading ? (
                 <p>Loading...</p>
             ) : error ? (
                 <p>Error: {error}</p>
             ) : isLoggedIn && filteredPosts.length > 0 ? (
-                <div className="articles">
-                    {filteredPosts.length > 0 ? (
-                        filteredPosts.map((post) => (
-                            <ArticleCard key={post.article_id} post={post} />
-                        ))
-                    ) : (
-                        <p>No posts available.</p>
-                    )} 
+                <div class="row">
+                    <div class="col s12">
+                        {recommendedPosts.length > 0 ? (
+                            recommendedPosts.map((post) => (
+                                <ArticleCard key={post.article_id} post={post} />
+                            ))
+                        ) : (
+                            <p>No posts available based on your preferences.</p>
+                        )} 
+                    </div>
+                    <div class="col s12"> 
+                        {filteredPosts.length > 0 ? (
+                            filteredPosts.map((post) => (
+                                <ArticleCard key={post.article_id} post={post} />
+                            ))
+                        ) : (
+                            <p>No posts available based on your preferences.</p>
+                        )} 
+                    </div>
                 </div>
             ) : (
                 <div className="articles">

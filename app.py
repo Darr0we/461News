@@ -587,8 +587,15 @@ def get_user_preferences(user_id):
                 """,
                 (user_id,)
             )
+            recommedations = cursor.fetchall()
+            cursor.execute(
+                """
+                SELECT topic_id FROM user_preferences WHERE user_id = %s
+                """,
+                (user_id,)
+            )
             preferences = cursor.fetchall()
-            return jsonify({"preferences": preferences}), 200
+            return jsonify({"recommendations": recommedations, "preferences": preferences}), 200
     except Exception as e:
         app.logger.error(f"Error fetching preferences: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
