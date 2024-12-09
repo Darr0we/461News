@@ -57,9 +57,6 @@ const LogInPage = () => {
             alert(err.message);
         }
     };
-    
-    
-    
 
     return (
         <Box

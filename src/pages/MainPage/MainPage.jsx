@@ -44,10 +44,10 @@ function MainPage() {
             target: { value },
         } = event;
         const updatedHashTag = typeof value === 'string' ? value.split(',') : value;
-        setHashTag(updatedHashTag); // Update the hashTag state
+        setHashTag(updatedHashTag); 
         setFormData((prevData) => ({
             ...prevData,
-            hashtags: updatedHashTag, // Update the hashtags field in formData directly
+            hashtags: updatedHashTag, 
         }));
     };
 

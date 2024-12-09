@@ -115,6 +115,9 @@ function Navbar() {
                             </Dropdown.Menu>
                         </Dropdown>
                     </li>
+                    <li className="nav-item me-3">
+                        <Link to="/main" className="nav-link">Post Article</Link>
+                    </li>
                 </ul>
 
                 {/* Right Side: Login */}
