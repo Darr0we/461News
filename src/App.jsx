@@ -7,6 +7,7 @@ import ArticleDetails from './pages/ArticleDetailsPage/ArticleDetails';
 import Profile from './pages/ProfilePage/Profile';
 import AboutUsPage from './pages/AboutUsPage/AboutUs';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import EditProfilePage from './pages/EditProfilePage/EditProfile';
 
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Navbar from './components/navbar/Navbar';
@@ -26,6 +27,7 @@ function App() {
           <Route path="/article/:id" element={<ArticleDetails />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/about-us" element={<AboutUsPage />} />
+          <Route path="/edit-profile" element={<EditProfilePage />} />
         </Routes>
       </Router>
     </AuthProvider>
