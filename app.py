@@ -361,7 +361,7 @@ def login():
             if user and bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
                 access_token = create_access_token(identity=user['user_id'])
                 print(f"Login successful for user ID: {user['user_id']}")
-                return jsonify(access_token=access_token), 200
+                return jsonify(user_id=user['user_id'], access_token=access_token), 200
             else:
                 print(f"Invalid email or password for email: {email}")
                 return jsonify({"error": "Invalid email or password"}), 401
