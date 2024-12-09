@@ -1,6 +1,6 @@
 import { React, useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, Typography, Paper, Grid2 as Grid, Divider } from '@mui/material';
+import { Button, Box, TextField, Typography, Paper, Grid2 as Grid, Divider } from '@mui/material';
 
 function ArticleDetails() {
   const { id } = useParams();
@@ -8,9 +8,18 @@ function ArticleDetails() {
   const [author, setAuthor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]);
-  const interactionRecorded = useRef(false); // To track if interaction is already recorded
+  const [formData, setFormData] = useState({
+    user_id: '',
+    article_id: id,
+    comment_text: '',
+  });
+
+  const interactionRecorded = useRef(false); 
+  const maxRetires = 5;
+  const retryInterval = 3000;
 
   useEffect(() => {
+    let retryCount = 0;
     const fetchArticleData = async () => {
       try {
         const response = await fetch(`http://localhost:5001/articles/${id}`);
@@ -29,10 +38,19 @@ function ArticleDetails() {
         }
       } catch (err) {
         console.error('Error fetching article:', err);
+        retryCount += 1;
+        if (retryCount <= maxRetires) {
+          setTimeout(fetchArticleData, retryInterval);
+        } else {
+          console.error('Max retries reached')
+        }
       }
     };
 
     fetchArticleData();
+    return () => {
+      clearTimeout(fetchArticleData);
+    }
   }, [id]); // Depend only on the article ID
 
   useEffect(() => {
@@ -63,7 +81,7 @@ function ArticleDetails() {
           throw new Error('Failed to fetch Comments');
         }
         const data = await response.json();
-        const filteredComments = data.filter(comment => comment.article_id == article.article_id);
+        const filteredComments = data.filter(comment => comment.article_id === article.article_id);
         setComments(filteredComments);
       } catch (err) {
         console.error('Error fetching comments:', err);
@@ -73,7 +91,7 @@ function ArticleDetails() {
     };
 
     fetchComments();
-  })
+  }, [article]);
 
   const recordInteraction = async (topicId) => {
     try {
@@ -107,11 +125,60 @@ function ArticleDetails() {
     return relevant.join(' ');
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const userId = localStorage.getItem('user_id');
+    if (!userId) {
+      alert('You must be logged in to comment.');
+      return;
+    }
+
+    const commentPayload = {
+      user_id: userId,
+      article_id: formData.article_id,
+      comment_text: formData.comment_text,
+    };
+
+    try {
+      const response = await fetch(`http://localhost:5001/comments`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(commentPayload),
+      });
+
+      if (!response.ok) {
+        const errorDetails = await response.json();
+        throw new Error('Error submitting comment:', errorDetails);
+      }
+
+      setFormData({ ...formData, comment_text: '' });
+
+      const updatedComments = await fetch(`http://localhost:5001/comments`);
+      const data = await updatedComments.json();
+      setComments(data.filter(comment => comment.article_id === parseInt(id)));
+    } catch (err) {
+        console.error('Error during login:', err.message);
+        alert(err.message);
+    }
+  };
+
   return (
     <Box
       sx={{
         bgcolor: 'primary.dark',
-        height: '100vh',
+        height: 'auto',
         width: '100vw',
         paddingTop: '6rem',
       }}
@@ -126,6 +193,8 @@ function ArticleDetails() {
         ) : (
           <Grid item size={8} offset={2}>
             {/* Article Details */}
+            {article ? (
+            <>
             <Paper elevation={4} sx={{ padding: '1rem' }}>
               <Grid item size={10} offset={1}>
                 <Paper elevation={6} sx={{ padding: '2rem' }}>
@@ -189,10 +258,15 @@ function ArticleDetails() {
                 </Grid>
               )}
             </Paper>
+            </>
+            ) : (
+              <Paper elevation={4} sx={{ padding: '1rem' }}>Article is Loading</Paper>
+            )}
           </Grid>
         )}
       </Grid>
       <br />
+      {/* Comment Details */}
       <Grid container spacing={2}>
       {loading ? (
           <Grid item size={8} offset={2}>
@@ -202,7 +276,6 @@ function ArticleDetails() {
           </Grid>
         ) : (
           <Grid item size={8} offset={2}>
-            {/* Comment Details */}
             <Paper elevation={4} sx={{ padding: '1rem' }}>
               <Grid item size={12} offset={0}>
                 <Paper elevation={8} sx={{ padding: '1rem' }}>
@@ -217,13 +290,40 @@ function ArticleDetails() {
                   </Typography>
                 </Paper>
                 <br />
+                <form style={{display: "flex"}} onSubmit={handleSubmit}>
+                  <Paper elevation={4} sx={{ padding: '1rem' }}>
+                    <TextField 
+                      fullWidth
+                      label="Write a comment"
+                      name='comment_text'
+                      type='comment_text'
+                      variant='outlined'
+                      style={{width: '480px'}}
+                      value={formData.comment_text}
+                      onChange={handleInputChange}
+                    />
+                  </Paper>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    size="small"
+                    sx={{
+                      ml: "auto",
+                      bgcolor: 'primary.dark',
+                      '&:hover': {
+                        bgcolor: 'primary.main',
+                      },
+                    }}
+                  >
+                    Submit
+                  </Button>
+                </form>
+                <br />
                 {comments.length > 0 ? (
                   comments.map((comment) => (
-                    <Paper elevation={4} sx={{ padding: '1rem' }}
-                      key={comment.comment_id}
-                    >
+                    <Paper elevation={4} sx={{ padding: '1rem' }}>
                       #{comment.comment_id} {comment.comment_text} <br />
-                      {comment.comment_date}
+                      User {comment.user_id} - {comment.comment_date}
                     </Paper>
                   ))
                 ) : (

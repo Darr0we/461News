@@ -33,14 +33,12 @@ const LogInPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+    
         try {
             const response = await fetch('http://localhost:5001/login', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData), 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
             });
     
             if (!response.ok) {
@@ -50,22 +48,15 @@ const LogInPage = () => {
     
             const data = await response.json();
             console.log('Login successful:', data);
-    
-            // Save token in localStorage
             localStorage.setItem('token', data.access_token);
-            console.log('Token stored in localStorage:', localStorage.getItem('token'));
-    
+            localStorage.setItem('user_id', data.user_id); 
             setIsLoggedIn(true);
-    
-            // Navigate to profile page
             navigate('/profile');
         } catch (err) {
             console.error('Error during login:', err.message);
-            alert(err.message); 
+            alert(err.message);
         }
     };
-    
-    
 
     return (
         <Box

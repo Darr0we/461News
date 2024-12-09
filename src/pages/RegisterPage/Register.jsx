@@ -1,4 +1,4 @@
-import {React, useState} from 'react';
+import React, { useState } from "react";
 import {
     Button,
     TextField,
@@ -6,15 +6,53 @@ import {
     CardContent,
     Typography,
     Divider,
-    Checkbox,
-    FormControlLabel,
     Box,
     Container,
+    Chip,
+    MenuItem
 } from '@mui/material';
 import { Google as GoogleIcon, Facebook as FacebookIcon, Language as GlobeIcon } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
+
+
+const listOfPreferences = [
+    'Technology',
+    'Finance',
+    'Politics',
+    'LifeStyle',
+    'Stock',
+    'Fitness',
+    'Travel',
+    'Medicare',
+    'Cooking',
+];
+
+function getStyles(name, preferences, theme) {
+    return {
+        fontWeight: preferences.includes(name)
+            ? theme.typography.fontWeightMedium
+            : theme.typography.fontWeightRegular,
+        };
+}
 
 
 const Register = () => {
+    const theme = useTheme();
+    const [preferences, setPreferences] = React.useState([]);
+
+    const onChangePreferences = (event) => {
+        const {
+            target: { value },
+        } = event;
+        const updatedPreferences = typeof value === 'string' ? value.split(',') : value;
+        setPreferences(updatedPreferences); 
+        setFormData((prevData) => ({
+            ...prevData,
+            references: updatedPreferences, 
+        }));
+    };
+
+
     const [formData, setFormData] = useState({
         username: '',
         email: '',
@@ -30,10 +68,32 @@ const Register = () => {
     }));
     };
 
-    const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Register attempted with:', formData);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+    
+        try {
+            const response = await fetch('http://localhost:5001/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+    
+            if (!response.ok) {
+                const errorDetails = await response.json();
+                throw new Error(errorDetails.error || 'Failed to register user');
+            }
+    
+            const data = await response.json();
+            console.log('Registration successful:', data);
+            alert('Registration successful! You can now log in.');
+        } catch (err) {
+            console.error('Error during registration:', err.message);
+            alert(`Registration failed: ${err.message}`);
+        }
     };
+    
 
     
     return (
@@ -60,7 +120,7 @@ const Register = () => {
                     <Card>
                         <CardContent sx={{ p: 4 }}>
                             <Typography variant="h4" align="center" gutterBottom>
-                            Register
+                                Register
                             </Typography>
 
                             {/* Social Login Buttons */}
@@ -125,14 +185,30 @@ const Register = () => {
                                     />
 
                                     <TextField
-                                        fullWidth
-                                        label="Topics Preferences"
+                                        label="Preferences"
                                         name="preferences"
-                                        type="input"
-                                        variant="outlined"
-                                        value={formData.references}
-                                        onChange={handleInputChange}
-                                    />
+                                        fullWidth
+                                        margin="normal"
+                                        select
+                                        SelectProps={{
+                                            multiple: true,
+                                            value: preferences,
+                                            onChange: onChangePreferences,
+                                            renderValue: (selected) => (
+                                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                                                {selected.map((value) => (
+                                                <Chip key={value} label={value} />
+                                                ))}
+                                            </Box>
+                                            ),
+                                        }}
+                                        >
+                                        {listOfPreferences.map((eachPreference) => (
+                                            <MenuItem key={eachPreference} value={eachPreference} style={getStyles(eachPreference, preferences, theme)}>
+                                            {eachPreference}
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
 
                                     <Button
                                     type="submit"

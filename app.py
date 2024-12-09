@@ -12,6 +12,7 @@ import bcrypt
 from datetime import timedelta
 from contextlib import contextmanager
 from dotenv import load_dotenv
+import random
 
 load_dotenv()
 
@@ -20,10 +21,6 @@ app = Flask(__name__)
 load_dotenv()
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:3000")
 CORS(app, resources={r"/*": {"origins": FRONTEND_ORIGIN}}, supports_credentials=True)
-
-
-
-
 
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=1)
@@ -131,47 +128,101 @@ def homepage():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route('/articles', methods=['GET'])
-@jwt_required()
 def get_articles():
-    """
-    Fetch articles with optional topic filtering, pagination,
-    and interaction prioritization.
-    """
+    user_id = request.args.get('user_id', None)
+    topic_id = request.args.get('topic_id', None)
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+    offset = (page - 1) * per_page
+
     try:
-        user_id = get_jwt_identity()
-        topic_id = request.args.get('topic_id', 'all')
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 10, type=int)
-
-        offset = (page - 1) * per_page
-
         with db_connection() as connection:
             cursor = connection.cursor(dictionary=True)
-            query = """
-                SELECT a.*, COALESCE(uti.interaction_count, 0) AS interaction_count
+
+            # Case 1: Filter by topic_id if provided
+            if topic_id:
+                cursor.execute(
+                    """
+                    SELECT * FROM articles
+                    WHERE topic_id = %s
+                    ORDER BY publish_date DESC
+                    LIMIT %s OFFSET %s
+                    """,
+                    (topic_id, per_page, offset)
+                )
+                articles = cursor.fetchall()
+                print(f"Fetched {len(articles)} articles for topic_id {topic_id}")  
+                return jsonify(articles), 200
+
+            # Case 2: Guest user (random posts)
+            if not user_id:
+                cursor.execute(
+                    """
+                    SELECT * FROM articles
+                    ORDER BY RAND()
+                    LIMIT %s OFFSET %s
+                    """,
+                    (per_page, offset)
+                )
+                articles = cursor.fetchall()
+                print(f"Fetched {len(articles)} random articles")  
+                return jsonify(articles), 200
+            prioritized_count = int(per_page * 0.8)  
+            random_count = per_page - prioritized_count
+
+            # Fetch prioritized articles
+            cursor.execute(
+                """
+                SELECT a.*
                 FROM articles a
-                LEFT JOIN user_topic_interactions uti
-                ON a.topic_id = uti.topic_id AND uti.user_id = %s
-            """
-            params = [user_id]
+                JOIN (
+                    SELECT topic_id, LEAST(interaction_count / total_interactions, 0.5) AS weight
+                    FROM (
+                        SELECT topic_id, interaction_count, SUM(interaction_count) OVER () AS total_interactions
+                        FROM user_topic_interactions
+                        WHERE user_id = %s
+                    ) t
+                ) weights ON a.topic_id = weights.topic_id
+                ORDER BY weights.weight * RAND() DESC, a.publish_date DESC
+                LIMIT %s OFFSET %s
+                """,
+                (user_id, prioritized_count, offset)
+            )
+            prioritized_articles = cursor.fetchall()
 
-            if topic_id != 'all':
-                query += " WHERE a.topic_id = %s"
-                params.append(topic_id)
+            # Fetch random articles for variety
+            cursor.execute(
+                """
+                SELECT * FROM articles
+                WHERE topic_id NOT IN (
+                    SELECT topic_id FROM user_topic_interactions WHERE user_id = %s
+                )
+                ORDER BY RAND()
+                LIMIT %s
+                """,
+                (user_id, random_count)
+            )
+            random_articles = cursor.fetchall()
 
-            query += " ORDER BY interaction_count DESC, a.publish_date DESC LIMIT %s OFFSET %s"
-            params.extend([per_page, offset])
+            articles = prioritized_articles + random_articles
+            if len(articles) < per_page:
+                cursor.execute(
+                    """
+                    SELECT * FROM articles
+                    ORDER BY publish_date DESC
+                    LIMIT %s OFFSET %s
+                    """,
+                    (per_page - len(articles), offset)
+                )
+                articles += cursor.fetchall()
 
-            cursor.execute(query, tuple(params))
-            articles = cursor.fetchall()
-
-            return jsonify(articles), 200
+            print(f"Returning {len(articles)} articles")  
+            return jsonify(articles[:per_page]), 200
 
     except Exception as e:
-        app.logger.error(f"Error in /articles: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        app.logger.error(f"Error in get_articles: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @app.route('/articles/search', methods=['GET'])
@@ -289,9 +340,12 @@ def register():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
+    print(f"Login request received: {data}")  # Log incoming data
+
     required_fields = ['email', 'password']
     is_valid, error = validate_required_fields(data, required_fields)
     if not is_valid:
+        print(f"Validation failed: {error}")
         return jsonify({"error": error}), 400
 
     email = data['email']
@@ -302,13 +356,19 @@ def login():
             cursor = connection.cursor(dictionary=True)
             cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
             user = cursor.fetchone()
+            print(f"User fetched: {user}")  # Log the user fetched from DB
+
             if user and bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
                 access_token = create_access_token(identity=user['user_id'])
-                return jsonify(access_token=access_token), 200
+                print(f"Login successful for user ID: {user['user_id']}")
+                return jsonify(user_id=user['user_id'], access_token=access_token), 200
             else:
+                print(f"Invalid email or password for email: {email}")
                 return jsonify({"error": "Invalid email or password"}), 401
     except Exception as e:
+        print(f"Exception during login: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/refresh', methods=['POST'])
 @jwt_required(refresh=True)
@@ -332,7 +392,7 @@ def get_topics():
 def get_comments():
     try:
         page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 10, type=int)
+        per_page = request.args.get('per_page', 1000, type=int)
         if page < 1 or per_page < 1:
             return jsonify({"error": "Invalid pagination parameters"}), 400
         
@@ -389,6 +449,10 @@ def profile():
     except Exception as e:
         app.logger.error(f"Error in /profile: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
+@app.route('/validate-token', methods=['POST'])
+@jwt_required()
+def validate_token():
+    return jsonify({"valid": True}), 200
 
 
 
@@ -505,7 +569,36 @@ def record_interaction():
     except Exception as e:
         print(f"Error recording interaction: {str(e)}")
         return jsonify({"error": "Database error"}), 500
-
+# Jared
+@app.route('/users/<int:user_id>/preferences', methods=['GET'])
+@jwt_required()
+def get_user_preferences(user_id):
+    try:
+        with db_connection() as connection:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(
+                """
+                SELECT topic_id, LEAST(interaction_count / total_interactions, 0.5) AS weight
+                FROM (
+                    SELECT topic_id, interaction_count, SUM(interaction_count) OVER () AS total_interactions
+                    FROM user_topic_interactions
+                    WHERE user_id = %s
+                ) t
+                """,
+                (user_id,)
+            )
+            recommedations = cursor.fetchall()
+            cursor.execute(
+                """
+                SELECT topic_id FROM user_preferences WHERE user_id = %s
+                """,
+                (user_id,)
+            )
+            preferences = cursor.fetchall()
+            return jsonify({"recommendations": recommedations, "preferences": preferences}), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching preferences: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 @app.errorhandler(Exception)
 def handle_exception(e):
