@@ -160,7 +160,7 @@ function ArticleDetails() {
 
       if (!response.ok) {
         const errorDetails = await response.json();
-        throw new Error('Errir submitting comment:', errorDetails);
+        throw new Error('Error submitting comment:', errorDetails);
       }
 
       setFormData({ ...formData, comment_text: '' });
