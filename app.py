@@ -392,7 +392,7 @@ def get_topics():
 def get_comments():
     try:
         page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 10, type=int)
+        per_page = request.args.get('per_page', 1000, type=int)
         if page < 1 or per_page < 1:
             return jsonify({"error": "Invalid pagination parameters"}), 400
         

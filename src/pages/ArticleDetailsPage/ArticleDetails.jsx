@@ -91,7 +91,7 @@ function ArticleDetails() {
     };
 
     fetchComments();
-  })
+  }, [article]);
 
   const recordInteraction = async (topicId) => {
     try {
@@ -134,7 +134,7 @@ function ArticleDetails() {
   };
 
   const handleSubmit = async (e) => {
-    //e.preventDeafult();
+    e.preventDefault();
 
     const userId = localStorage.getItem('user_id');
     if (!userId) {
@@ -167,7 +167,7 @@ function ArticleDetails() {
 
       const updatedComments = await fetch(`http://localhost:5001/comments`);
       const data = await updatedComments.json();
-      setComments(data.filter(comment => comment.article_id === article.article_id));
+      setComments(data.filter(comment => comment.article_id === parseInt(id)));
     } catch (err) {
         console.error('Error during login:', err.message);
         alert(err.message);
@@ -321,11 +321,9 @@ function ArticleDetails() {
                 <br />
                 {comments.length > 0 ? (
                   comments.map((comment) => (
-                    <Paper elevation={4} sx={{ padding: '1rem' }}
-                      key={comment.comment_id}
-                    >
+                    <Paper elevation={4} sx={{ padding: '1rem' }}>
                       #{comment.comment_id} {comment.comment_text} <br />
-                      {comment.comment_date}
+                      User {comment.user_id} - {comment.comment_date}
                     </Paper>
                   ))
                 ) : (
