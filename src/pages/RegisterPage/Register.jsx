@@ -30,10 +30,32 @@ const Register = () => {
     }));
     };
 
-    const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Register attempted with:', formData);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+    
+        try {
+            const response = await fetch('http://localhost:5001/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+    
+            if (!response.ok) {
+                const errorDetails = await response.json();
+                throw new Error(errorDetails.error || 'Failed to register user');
+            }
+    
+            const data = await response.json();
+            console.log('Registration successful:', data);
+            alert('Registration successful! You can now log in.');
+        } catch (err) {
+            console.error('Error during registration:', err.message);
+            alert(`Registration failed: ${err.message}`);
+        }
     };
+    
 
     
     return (

@@ -8,7 +8,7 @@ function ArticleDetails() {
   const [author, setAuthor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]);
-  const interactionRecorded = useRef(false); // To track if interaction is already recorded
+  const interactionRecorded = useRef(false); 
   const maxRetires = 5;
   const retryInterval = 3000;
 

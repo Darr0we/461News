@@ -13,6 +13,11 @@ function Navbar() {
     const navigate = useNavigate();
 
     useEffect(() => {
+        const token = localStorage.getItem('token');
+        setIsLoggedIn(!!token); // Sync `isLoggedIn` with token presence
+    }, [setIsLoggedIn]);
+
+    useEffect(() => {
         const fetchUserData = async () => {
             try {
                 const response = await fetch('http://localhost:5001/profile', {
@@ -20,22 +25,24 @@ function Navbar() {
                         Authorization: `Bearer ${localStorage.getItem('token')}`,
                     },
                 });
-  
+
                 if (!response.ok) {
                     throw new Error('Failed to fetch user data');
                 }
-  
+
                 const data = await response.json();
                 setUser(data);
+                setIsLoggedIn(true); // Set as logged in if fetching succeeds
             } catch (error) {
                 console.error('Error fetching user data:', error);
+                handleLogout(); // Logout if fetching fails
             }
         };
-  
+
         if (localStorage.getItem('token')) {
             fetchUserData();
         }
-    }, []);
+    }, [setIsLoggedIn]);
 
     useEffect(() => {
         const fetchTopics = async () => {
@@ -49,7 +56,6 @@ function Navbar() {
                     throw new Error('Failed to fetch topics');
                 }
                 const data = await response.json();
-
                 const filteredTopics = data.filter(topic => topic.topic_id >= 1 && topic.topic_id <= 6);
                 setTopics(filteredTopics);
             } catch (error) {
@@ -64,30 +70,31 @@ function Navbar() {
         navigate(`/?topic=${topicId}`); 
     };
 
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        setIsLoggedIn(false);
+        setUser(null);
+        navigate('/login');
+    };
+
+    useEffect(() => {
+        console.log("Navbar state - Is Logged In:", isLoggedIn, "User:", user);
+    }, [isLoggedIn, user]);
+
     return (
         <nav className="navbar navbar-expand-lg navbar-light bg-light">
             <div className="container">
                 {/* Left Side: Links */}
                 <ul className="navbar-nav flex-row me-auto mb-2 mb-lg-0">
                     <li className="nav-item me-3">
-                        <Link to="/" className="nav-link">
-                            Home
-                        </Link>
+                        <Link to="/" className="nav-link">Home</Link>
                     </li>
                     <li className="nav-item me-3">
-                        <Link to="/about-us" className="nav-link">
-                            About Us
-                        </Link>
+                        <Link to="/about-us" className="nav-link">About Us</Link>
                     </li>
-                    {!isLoggedIn ? (
-                        <li className="nav-item me-3">
-                            <Link to="/profile" className="nav-link">
-                                Profile
-                            </Link>
-                        </li>
-                    ) :(
-                        <li></li>
-                    )}
+                    <li className="nav-item me-3">
+                        <Link to="/profile" className="nav-link">Profile</Link>
+                    </li>
                     <li className="nav-item dropdown me-3">
                         <Dropdown>
                             <Dropdown.Toggle id="dropdown-basic">Topics</Dropdown.Toggle>
@@ -120,10 +127,10 @@ function Navbar() {
                     </Dropdown>
                 ) : (
                     <Dropdown>
-                        <Dropdown.Toggle id="dropdown-basic">{user?.username}</Dropdown.Toggle>
+                        <Dropdown.Toggle id="dropdown-basic">{user?.username || 'User'}</Dropdown.Toggle>
                         <Dropdown.Menu>
                             <Dropdown.Item href="/profile">Profile</Dropdown.Item>
-                            <Dropdown.Item onClick={() => setIsLoggedIn(false)} href="/">Logout</Dropdown.Item>
+                            <Dropdown.Item onClick={handleLogout}>Logout</Dropdown.Item>
                         </Dropdown.Menu>
                     </Dropdown>
                 )}
