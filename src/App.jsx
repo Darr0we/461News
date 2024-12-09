@@ -12,6 +12,7 @@ import EditProfilePage from './pages/EditProfilePage/EditProfile';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Navbar from './components/navbar/Navbar';
 import { AuthProvider } from './context/AuthContext'; 
+import MainPage from './pages/MainPage/MainPage';
 
 function App() {
   const [category, setCategory] = useState('all');
@@ -28,6 +29,7 @@ function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/about-us" element={<AboutUsPage />} />
           <Route path="/edit-profile" element={<EditProfilePage />} />
+          <Route path="/main" element={<MainPage />} />
         </Routes>
       </Router>
     </AuthProvider>
