@@ -8,6 +8,12 @@ function ArticleDetails() {
   const [author, setAuthor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]);
+  const [formData, setFormData] = useState({
+    user_id: '',
+    article_id: id,
+    comment_text: '',
+  });
+
   const interactionRecorded = useRef(false); 
   const maxRetires = 5;
   const retryInterval = 3000;
@@ -117,6 +123,55 @@ function ArticleDetails() {
     const words = article.publish_date.split(' ');
     const relevant = words.slice(0, 4);
     return relevant.join(' ');
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    //e.preventDeafult();
+
+    const userId = localStorage.getItem('user_id');
+    if (!userId) {
+      alert('You must be logged in to comment.');
+      return;
+    }
+
+    const commentPayload = {
+      user_id: userId,
+      article_id: formData.article_id,
+      comment_text: formData.comment_text,
+    };
+
+    try {
+      const response = await fetch(`http://localhost:5001/comments`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(commentPayload),
+      });
+
+      if (!response.ok) {
+        const errorDetails = await response.json();
+        throw new Error('Errir submitting comment:', errorDetails);
+      }
+
+      setFormData({ ...formData, comment_text: '' });
+
+      const updatedComments = await fetch(`http://localhost:5001/comments`);
+      const data = await updatedComments.json();
+      setComments(data.filter(comment => comment.article_id === article.article_id));
+    } catch (err) {
+        console.error('Error during login:', err.message);
+        alert(err.message);
+    }
   };
 
   return (
@@ -235,7 +290,7 @@ function ArticleDetails() {
                   </Typography>
                 </Paper>
                 <br />
-                <form style={{display: "flex"}}>
+                <form style={{display: "flex"}} onSubmit={handleSubmit}>
                   <Paper elevation={4} sx={{ padding: '1rem' }}>
                     <TextField 
                       fullWidth
@@ -244,6 +299,8 @@ function ArticleDetails() {
                       type='comment_text'
                       variant='outlined'
                       style={{width: '480px'}}
+                      value={formData.comment_text}
+                      onChange={handleInputChange}
                     />
                   </Paper>
                   <Button
