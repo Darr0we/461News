@@ -11,6 +11,7 @@ function HomePage() {
     const [page, setPage] = useState(1);
     const [topic, setTopic] = useState(null);
     const [preferences, setPreferences] = useState([]);
+    const [recommendations, setRecommendations] = useState([]);
     const perPage = 20;
 
     const location = useLocation();
@@ -76,7 +77,7 @@ function HomePage() {
         const fetchPreferences = async () => {
             try {
                 const userId = localStorage.getItem('user_id');
-                const response = await fetch(`http://localhost:5001/users/${userId}/preferences`, {
+                const response = await fetch(`http://localhost:5001/users/${parseInt(userId)}/preferences`, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`,
                     },
@@ -84,8 +85,9 @@ function HomePage() {
                 if (!response.ok) {
                     throw new Error('Failed to fetch preferences');
                   }
-                  const data = await response.json();
-                  setPreferences(data);
+                const data = await response.json();
+                setRecommendations(data.recommendations);
+                setPreferences(data.preferences);
             } catch (err) {
                 console.error('Error fetching preferences:', err);
             }
@@ -96,26 +98,50 @@ function HomePage() {
         }
     }, [isLoggedIn]);
 
+    const recommendedPosts = posts.filter(post =>
+        recommendations.some(recommendation => recommendation.topic_id === post.topic_id)
+    );
+
+    const filteredPosts = posts.filter(post =>
+        preferences.some(preference => preference.topic_id === post.topic_id)
+    );
+
     return (
         <div style={{ backgroundColor: '#2196f3' }} className="homepage">
             <h1 style={{ backgroundColor: 'white' }}>
-                {topicId !== 'all' ? `Posts for ${topic?.name}` : isLoggedIn ? 'Recommended Posts' : 'Latest Posts'}
+                {topicId !== 'all' ? 
+                    `Posts for ${topic?.name}` : 
+                    isLoggedIn ? 
+                        <p>&nbsp;&nbsp;&nbsp;
+                            Recommended Posts 
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            Your Preferred Posts</p> : 
+                        'Latest Posts'}
             </h1>
             {loading ? (
                 <p>Loading...</p>
             ) : error ? (
                 <p>Error: {error}</p>
-            ) : isLoggedIn && preferences.length > 0 ? (
-                <div className="articles">
-                    {preferences.map((preference) => (
-                        (posts.length) > 0 ? (
-                            posts.map((post) => (
-                                <ArticleCard key={preference.topic_id} post={post} />
+            ) : isLoggedIn && filteredPosts.length > 0 ? (
+                <div class="row">
+                    <div class="col s12">
+                        {recommendedPosts.length > 0 ? (
+                            recommendedPosts.map((post) => (
+                                <ArticleCard key={post.article_id} post={post} />
                             ))
                         ) : (
-                            <p>No posts available.</p>
-                        )
-                    ))} 
+                            <p>No posts available based on your preferences.</p>
+                        )} 
+                    </div>
+                    <div class="col s12"> 
+                        {filteredPosts.length > 0 ? (
+                            filteredPosts.map((post) => (
+                                <ArticleCard key={post.article_id} post={post} />
+                            ))
+                        ) : (
+                            <p>No posts available based on your preferences.</p>
+                        )} 
+                    </div>
                 </div>
             ) : (
                 <div className="articles">
